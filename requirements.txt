@@ -1,0 +1,6 @@
+langchain
+langchain-community
+langgraph
+chromadb
+sentence-transformers
+pypdf
