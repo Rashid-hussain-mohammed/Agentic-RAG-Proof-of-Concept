@@ -1,2 +1,11 @@
 .rag/
 
+# Virtual Environments
+venv/
+env/
+
+# Environment Variables
+.env
+
+# MacOS system files
+.DS_Store
