@@ -1,6 +1,7 @@
 from fastapi import FastAPI
 from app.core.config import settings
 from app.api import documents
+from app.api import query
 
 app = FastAPI(
     title="Agentic RAG API",
@@ -8,6 +9,7 @@ app = FastAPI(
     version="1.0.0"
 )
 app.include_router(documents.router, prefix="/api/v1", tags=["Documents"])
+app.include_router(query.router, prefix="/api/v1", tags=["Queries"])
 
 @app.get("/health", tags=["System"])
 async def health_check():
