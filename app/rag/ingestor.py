@@ -23,7 +23,7 @@ def process_and_index_document(file_path: str):
 
     # 3. Initialize the embedding model
     # Note: Ensure sentence-transformers is installed if using HuggingFace
-    embeddings = HuggingFaceEmbeddings(model_name=settings.embedding_model)
+    embeddings = HuggingFaceEmbeddings(model_name=settings.embedding_model,model_kwargs={'device': settings.device})
 
     # 4. Store the chunks in the Chroma vector store
     vector_store = Chroma.from_documents(

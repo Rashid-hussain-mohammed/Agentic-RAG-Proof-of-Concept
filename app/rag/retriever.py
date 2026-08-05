@@ -7,7 +7,7 @@ def get_relevant_context(query: str):
     Searches the Chroma vector store for chunks relevant to the user's query.
     """
     # Re-initialize the embedding model
-    embeddings = HuggingFaceEmbeddings(model_name=settings.embedding_model)
+    embeddings = HuggingFaceEmbeddings(model_name=settings.embedding_model,model_kwargs={'device': settings.device})
     
     # Connect to the existing database
     vector_store = Chroma(
