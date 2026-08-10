@@ -1,28 +1,33 @@
 from fastapi import APIRouter, HTTPException
 from pydantic import BaseModel
-from app.rag.retriever import get_relevant_context
+from app.services.agent import app_agent
 
 router = APIRouter()
 
-# Define what the incoming JSON request should look like
 class QueryRequest(BaseModel):
     question: str
 
 @router.post("/query")
 async def ask_question(request: QueryRequest):
     """
-    Submit a question to retrieve relevant context from the uploaded documents.
+    Submit a question to the LangGraph agentic workflow.
     """
     try:
-        # Fetch the context from our Chroma database
-        context = get_relevant_context(request.question)
+        initial_state = {
+            "question": request.question,
+            "context": "",
+            "answer": "",
+            "generation_ready": "",
+            "loop_count": 0
+        }
         
-        # TODO: Pass this context to Ollama/Claude via LangGraph
+        result = app_agent.invoke(initial_state)
         
         return {
-            "question": request.question,
-            "retrieved_context": context,
-            "status": "Context retrieved successfully"
+            "original_question": request.question,
+            "final_question_used": result.get("question"),
+            "answer": result.get("answer"),
+            "retrieval_loops": result.get("loop_count")
         }
     except Exception as e:
-        raise HTTPException(status_code=500, detail=f"Error retrieving context: {str(e)}")
+        raise HTTPException(status_code=500, detail=f"Agent execution failed: {str(e)}")
