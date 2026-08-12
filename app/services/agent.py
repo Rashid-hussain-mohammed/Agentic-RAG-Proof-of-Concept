@@ -17,6 +17,12 @@ llm = ChatOllama(model=settings.model_name, temperature=0)
 def retrieve_node(state: AgentState):
     question = state["question"]
     context = get_relevant_context(question)
+    
+    # Debugging print to inspect fetched chunks in terminal
+    print("\n--- [DEBUG] RETRIEVED CONTEXT ---")
+    print(context if context else "NO CONTEXT FOUND!")
+    print("---------------------------------\n")
+    
     return {"context": context, "loop_count": state.get("loop_count", 0) + 1}
 
 def evaluate_context_node(state: AgentState):
@@ -24,12 +30,19 @@ def evaluate_context_node(state: AgentState):
     context = state["context"]
     
     prompt = PromptTemplate(
-        template="Does the following context contain sufficient information to answer the question? Answer exactly 'yes' or 'no'.\nContext: {context}\nQuestion: {question}",
+        template=(
+            "You are a strict evaluator. Does the following context contain sufficient information to answer the question? "
+            "Respond with exactly one word: 'yes' or 'no'. Do not include any other text.\n\n"
+            "Context: {context}\n"
+            "Question: {question}\n"
+            "Answer:"
+        ),
         input_variables=["context", "question"]
     )
     chain = prompt | llm
     result = chain.invoke({"context": context, "question": question}).content.strip().lower()
     
+    # We clean the result just in case Llama3 adds punctuation
     if "yes" in result:
         return {"generation_ready": "yes"}
     else:
@@ -38,11 +51,21 @@ def evaluate_context_node(state: AgentState):
 def rewrite_query_node(state: AgentState):
     question = state["question"]
     prompt = PromptTemplate(
-        template="Rewrite the following question to be more specific for a vector database search.\nQuestion: {question}\nRewritten Question:",
+        template=(
+            "You are a helpful assistant. Rewrite the following question to be a simple, natural language search query. "
+            "CRITICAL: Do NOT include technical instructions like 'Retrieve vectors' or 'cosine similarity'. "
+            "Return ONLY the core search terms.\n\n"
+            "Question: {question}\n"
+            "Rewritten Question:"
+        ),
         input_variables=["question"]
     )
     chain = prompt | llm
     rewritten = chain.invoke({"question": question}).content.strip()
+    
+    # Failsafe: if the LLM still outputs quotes, strip them
+    rewritten = rewritten.strip('"').strip("'")
+    
     return {"question": rewritten}
 
 def generate_node(state: AgentState):
