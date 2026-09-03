@@ -10,3 +10,5 @@ langgraph
 pypdf
 pytest
 httpx
+torch
+sentence-transformers
