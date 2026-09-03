@@ -1,0 +1,14 @@
+[
+  {
+    "question": "What is the main design goal for Hadoop 1.0 release?",
+    "expected_answer": "A stable and extensible MapReduce API."
+  },
+  {
+    "question": "Why do developers create a sampled subset of production data?",
+    "expected_answer": "To create a development data set for practicing and testing MapReduce programs before running them on large live clusters."
+  },
+  {
+    "question": "Where can you get the patent data sets mentioned for the examples?",
+    "expected_answer": "The National Bureau of Economic Research."
+  }
+]
