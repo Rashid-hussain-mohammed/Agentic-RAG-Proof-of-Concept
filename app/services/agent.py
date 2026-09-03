@@ -12,7 +12,11 @@ class AgentState(TypedDict):
     generation_ready: str
     loop_count: int
 
-llm = ChatOllama(model=settings.model_name, temperature=0)
+llm = ChatOllama(
+    model=settings.model_name, 
+    temperature=0, 
+    base_url="http://host.docker.internal:11434"
+)
 
 def retrieve_node(state: AgentState):
     question = state["question"]
