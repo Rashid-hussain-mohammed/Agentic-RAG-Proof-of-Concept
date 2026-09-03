@@ -1,6 +1,6 @@
 from typing import TypedDict
 from langgraph.graph import StateGraph, END
-from langchain_community.chat_models import ChatOllama
+from langchain_ollama import ChatOllama
 from langchain_core.prompts import PromptTemplate
 from app.rag.retriever import get_relevant_context
 from app.core.config import settings
