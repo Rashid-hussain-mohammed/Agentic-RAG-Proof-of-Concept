@@ -1,3 +1,4 @@
+import traceback
 from fastapi import APIRouter, HTTPException
 from pydantic import BaseModel
 from app.services.agent import app_agent
@@ -9,9 +10,6 @@ class QueryRequest(BaseModel):
 
 @router.post("/query")
 async def ask_question(request: QueryRequest):
-    """
-    Submit a question to the LangGraph agentic workflow.
-    """
     try:
         initial_state = {
             "question": request.question,
@@ -30,4 +28,5 @@ async def ask_question(request: QueryRequest):
             "retrieval_loops": result.get("loop_count")
         }
     except Exception as e:
+        traceback.print_exc()  # <--- Prints the exact line and error to your terminal
         raise HTTPException(status_code=500, detail=f"Agent execution failed: {str(e)}")

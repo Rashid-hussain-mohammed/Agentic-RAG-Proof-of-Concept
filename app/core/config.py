@@ -13,7 +13,7 @@ def get_hardware_device() -> str:
 
 class Settings(BaseSettings):
     # LLM and Embedding Settings
-    model_name: str = "ollama"
+    model_name: str = "llama3"
     embedding_model: str = "all-MiniLM-L6-v2"
     
     # RAG Configuration

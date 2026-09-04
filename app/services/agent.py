@@ -15,7 +15,6 @@ class AgentState(TypedDict):
 llm = ChatOllama(
     model=settings.model_name, 
     temperature=0, 
-    base_url="http://host.docker.internal:11434"
 )
 
 def retrieve_node(state: AgentState):

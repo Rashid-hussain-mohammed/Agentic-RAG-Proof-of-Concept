@@ -1,29 +1,31 @@
 import time
 import logging
 from fastapi import FastAPI, Request
+from fastapi.middleware.cors import CORSMiddleware
 from app.api import documents, query
 
-# 1. Set up the logger
 logging.basicConfig(level=logging.INFO)
-logger = logging.getLogger("agentic_rag")
+logger = logging.getLogger(__name__)
 
 app = FastAPI(title="Agentic RAG API")
 
-# 2. Add the Observability Middleware
+# Allow Frontend access
+app.add_middleware(
+    CORSMiddleware,
+    allow_origins=["http://localhost:5173", "http://127.0.0.1:5173", "*"],
+    allow_credentials=True,
+    allow_methods=["*"],
+    allow_headers=["*"],
+    expose_headers=["X-Process-Time"],
+)
+
 @app.middleware("http")
-async def log_requests(request: Request, call_next):
+async def add_process_time_header(request: Request, call_next):
     start_time = time.time()
-    
-    # Process the request
     response = await call_next(request)
-    
-    # Calculate time and log it
     process_time = time.time() - start_time
-    logger.info(f"Path: {request.url.path} | Method: {request.method} | Status: {response.status_code} | Time: {process_time:.4f}s")
-    
-    # Add the processing time to the response headers so the frontend can see it
+    logger.info(f"Path: {request.url.path} | Method: {request.method} | Time: {process_time:.4f}s")
     response.headers["X-Process-Time"] = str(process_time)
-    
     return response
 
 app.include_router(documents.router, prefix="/api/v1")
