@@ -1,11 +1,38 @@
-.rag/
-
 # Virtual Environments
 venv/
 env/
+.venv/
 
 # Environment Variables
 .env
+.env.local
 
 # MacOS system files
 .DS_Store
+
+# Python
+__pycache__/
+*.pyc
+*.pyo
+.pytest_cache/
+*.egg-info/
+
+# Vector store (regenerated locally via ingestion; don't commit compiled DB)
+vector_store/
+.rag/
+
+# Data files (regenerate/re-download locally; don't commit personal or copyrighted PDFs)
+data/*.pdf
+!data/eval_dataset.json
+
+# Frontend
+frontend/node_modules/
+frontend/dist/
+frontend/.vite/
+
+# Reports / generated artifacts
+stress_test_report.pdf
+
+# IDE
+.vscode/
+.idea/
