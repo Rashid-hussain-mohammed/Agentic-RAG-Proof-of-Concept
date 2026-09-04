@@ -13,3 +13,5 @@ pytest
 httpx
 torch
 sentence-transformers
+tabulate
+fpdf2
