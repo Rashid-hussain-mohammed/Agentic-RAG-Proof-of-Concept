@@ -2,11 +2,13 @@ import traceback
 from fastapi import APIRouter, HTTPException
 from pydantic import BaseModel
 from app.services.agent import app_agent
+from pydantic import BaseModel, Field
+
 
 router = APIRouter()
 
 class QueryRequest(BaseModel):
-    question: str
+    question: str = Field(..., min_length=1)
 
 @router.post("/query")
 async def ask_question(request: QueryRequest):

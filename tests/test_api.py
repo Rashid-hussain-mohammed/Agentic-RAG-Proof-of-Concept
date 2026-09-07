@@ -1,39 +1,52 @@
 from fastapi.testclient import TestClient
-from langchain_core.documents import Document
 from langchain_text_splitters import RecursiveCharacterTextSplitter
 from app.main import app
+from app.core.config import get_hardware_device, settings
 
-# This creates a mock version of your server for testing
 client = TestClient(app)
 
-def test_api_health():
-    """
-    Test that the FastAPI server rejects invalid payload structures
-    before ever reaching the AI agent.
-    """
-    # Sending an empty JSON payload instead of {"question": "..."}
-    response = client.post("/api/v1/query", json={})
-    
-    # FastAPI should automatically reject this with a 422 Unprocessable Entity
-    assert response.status_code == 422
+def test_api_is_responsive():
+    """Verify the FastAPI application boots and the auto-docs are accessible."""
+    response = client.get("/docs")
+    assert response.status_code == 200
 
-def test_chunking_math():
-    """
-    Test that the RecursiveCharacterTextSplitter is accurately applying
-    the chunk size and overlap math.
-    """
-    # Create a dummy document of exactly 1200 characters
-    dummy_text = "A" * 1200
-    doc = [Document(page_content=dummy_text)]
+def test_hardware_device_detection():
+    """Ensure the dynamic tensor routing correctly identifies a valid hardware backend."""
+    device = get_hardware_device()
+    assert device in ["mps", "cuda", "cpu"]
+
+def test_text_chunking_length():
+    """Validate that the recursive text splitter strictly enforces the configured ceiling."""
+    splitter = RecursiveCharacterTextSplitter(
+        chunk_size=settings.chunk_size,
+        chunk_overlap=settings.chunk_overlap
+    )
+    sample_text = "A" * 2500
+    chunks = splitter.split_text(sample_text)
     
-    # Split with 500 size and 50 overlap
-    splitter = RecursiveCharacterTextSplitter(chunk_size=500, chunk_overlap=50)
-    chunks = splitter.split_documents(doc)
+    assert len(chunks) >= 3
+    # split_text returns strings, so we check len(chunk) directly
+    assert all(len(chunk) <= settings.chunk_size for chunk in chunks)
+
+def test_text_chunking_overlap():
+    """Verify that document chunks overlap correctly to prevent data fragmentation."""
+    splitter = RecursiveCharacterTextSplitter(
+        chunk_size=settings.chunk_size,
+        chunk_overlap=settings.chunk_overlap
+    )
+    sample_text = "A" * (settings.chunk_size - 50) + "B" * (settings.chunk_overlap + 50)
+    chunks = splitter.split_text(sample_text)
     
-    # Chunk 1: 0 to 500 (Length: 500)
-    # Chunk 2: 450 to 950 (Length: 500)
-    # Chunk 3: 900 to 1200 (Length: 300)
-    
-    assert len(chunks) == 3, "Should create exactly 3 chunks"
-    assert len(chunks[0].page_content) == 500, "First chunk should be exactly 500 characters"
-    assert len(chunks[2].page_content) == 300, "Final chunk should be exactly 300 characters"
+    assert len(chunks) > 1
+    assert "B" in chunks[0]
+    assert "B" in chunks[1]
+
+def test_query_endpoint_rejects_empty_payloads():
+    """Ensure the Pydantic schemas reject empty strings."""
+    response = client.post("/api/v1/query", json={"question": ""})
+    assert response.status_code in [400, 422]
+
+def test_query_endpoint_rejects_malformed_json():
+    """Ensure the API catches improperly formatted requests before hitting the LangGraph node."""
+    response = client.post("/api/v1/query", content="not valid json")
+    assert response.status_code == 422

@@ -34,8 +34,12 @@ def evaluate_context_node(state: AgentState):
     
     prompt = PromptTemplate(
         template=(
-            "You are a strict evaluator. Does the following context contain sufficient information to answer the question? "
-            "Respond with exactly one word: 'yes' or 'no'. Do not include any other text.\n\n"
+            "You are a strict fact-verification judge.\n"
+            "Determine if the exact entity, specific metric, or numerical answer requested in the QUESTION is explicitly stated in the CONTEXT.\n\n"
+            "Rules:\n"
+            "1. If the QUESTION asks for a specific numerical figure (e.g., closing stock price, margin percentage) and that exact figure is NOT explicitly in the CONTEXT, answer 'no'.\n"
+            "2. Do not accept topically related information. If the question asks for 'stock price' and the context only mentions 'share count' or 'market cap', answer 'no'.\n"
+            "3. Respond with exactly one word: 'yes' or 'no'. Do not include explanations, punctuation, or any other text.\n\n"
             "Context: {context}\n"
             "Question: {question}\n"
             "Answer:"
@@ -45,8 +49,8 @@ def evaluate_context_node(state: AgentState):
     chain = prompt | llm
     result = chain.invoke({"context": context, "question": question}).content.strip().lower()
     
-    # We clean the result just in case Llama3 adds punctuation
-    if "yes" in result:
+    # Strict matching avoids false positives if the response contains the word 'no'
+    if result.startswith("yes"):
         return {"generation_ready": "yes"}
     else:
         return {"generation_ready": "no"}
@@ -76,7 +80,13 @@ def generate_node(state: AgentState):
     context = state["context"]
     
     prompt = PromptTemplate(
-        template="Answer the question based only on the context provided. If the context does not contain the answer, state that you do not know.\nContext: {context}\nQuestion: {question}\nAnswer:",
+        template=(
+            "Answer the question based only on the context provided. "
+            "If the context does not contain the answer, state that you do not know.\n"
+            "Context: {context}\n"
+            "Question: {question}\n"
+            "Answer:"
+        ),
         input_variables=["context", "question"]
     )
     chain = prompt | llm
